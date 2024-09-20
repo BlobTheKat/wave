@@ -30,7 +30,7 @@
 <script type="application/javascript" src="https://blobthekat.github.io/gamma.js#app"></script>
 <script type="module">
 	const title = document.getElementById('title'), speedLabel = document.getElementById('speed'), time = document.getElementById('time')
-	const actx = new AudioContext()
+	const actx = globalThis.actx = new AudioContext()
 	const fmt = a => a<768?a+'B':a<786432?(a/1024).toFixed(2)+'KB':a<805306368?(a/1048576).toFixed(2)+'MB':a<824633720832?(a/0x40000000).toFixed(2)+'GB':(a/0x10000000000).toFixed(2)+'TB'
 	let data, left, right
 	const decode = (f, n = f.name) => f.arrayBuffer().then(arr => (console.log('Read %s', fmt(arr.byteLength)), actx.decodeAudioData(arr, dat => {
@@ -67,12 +67,10 @@
 	let speed = 1
 	let vol = 1
 	function end(){
-		const a = max(0, (actx.currentTime - startT) * speed - data.duration)
-		startT = actx.currentTime - a / speed
-		play(a)
+		play(max(0, (actx.currentTime - startT) * speed - data.duration))
 	}
-	function play(t){
-		if(actx.state != 'running'){
+	function play(t = NaN){
+		if(actx.state == 'interrupted'){
 			if(s){
 				s.onended = null; s.stop(); s = null
 				startT = (actx.currentTime - startT) * speed
@@ -85,8 +83,9 @@
 		s.buffer = data
 		s.playbackRate.value = speed
 		gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
-		s.start(0, t)
 		s.onended = end
+		if(t == t) s.start(0, t), startT = actx.currentTime - t / speed
+		else s.start(0, (actx.currentTime - startT) * speed)
 	}
 	onmousewheel = e => {
 		zoom = max(1/240, min(data.duration, zoom*1.001**e.deltaY))
@@ -105,7 +104,7 @@
 				startT += 5
 				const d = data.duration / speed
 				while(startT > actx.currentTime) startT -= d
-				play((actx.currentTime - startT) * speed)
+				play()
 			}else{
 				startT -= 5 * speed
 				while(startT < 0) startT += data.duration
@@ -116,7 +115,7 @@
 				startT -= 5
 				const d = data.duration / speed
 				while(startT < actx.currentTime - d) startT += d
-				play((actx.currentTime - startT) * speed)
+				play()
 			}else{
 				startT += 5 * speed
 				if(startT > data.duration) startT %= data.duration
@@ -154,9 +153,7 @@
 		const x = max(0,min(1,e.x/innerWidth))
 		if(s){
 			s.onended = null, s.stop()
-			startT = x*data.duration
-			play(startT)
-			startT = actx.currentTime - startT / speed
+			play(x*data.duration)
 		}else startT = x*data.duration
 	}
 	onpointerup = e => {
@@ -168,7 +165,6 @@
 			return
 		}
 		play(startT)
-		startT = actx.currentTime - startT / speed
 	}
 	const lineGeo = Geometry(LINES, [0, 0, 1, 1])
 	const showTime = t => {
