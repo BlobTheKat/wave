@@ -134,8 +134,7 @@
 		}else if(e.keyCode == 48) applyCol(9)
 		else if(e.keyCode == 189) applyCol(10)
 		else if(e.keyCode == 187) applyCol(11)
-		else if(e.keyCode == 9) canvas.style.zIndex = 2-canvas.style.zIndex, hideUI = !hideUI
-		e.preventDefault()
+		else if(e.keyCode == 9) canvas.style.zIndex = 2-canvas.style.zIndex, hideUI = !hideUI, e.preventDefault()
 	}
 	oncontextmenu = e => e.preventDefault()
 	onpointerdown = () => {down = t+.15}
