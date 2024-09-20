@@ -88,7 +88,7 @@
 		else s.start(0, (actx.currentTime - startT) * speed)
 	}
 	onmousewheel = e => {
-		zoom = max(1/240, min(data.duration, zoom*1.001**e.deltaY))
+		zoom = max(1/240, min(data.duration, zoom*1.002**e.deltaY))
 	}
 	const STEP = sqrt(sqrt(2))
 	const cols = '122114411661244234435225'
@@ -150,6 +150,7 @@
 			speedLabel.textContent = 'Speed: ' + speed.toFixed(2)+'x'
 			return
 		}
+		if(e.pointerType != 'mouse') zoom = max(1/240, min(data.duration, zoom*1.002**e.movementY))
 		const x = max(0,min(1,e.x/innerWidth))
 		if(s){
 			s.onended = null, s.stop()
