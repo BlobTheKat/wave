@@ -90,7 +90,7 @@
 		if(t == t) s.start(0, t), startT = actx.currentTime - t / speed
 		else s.start(0, (actx.currentTime - startT) * speed)
 	}
-	onmousewheel = e => {
+	onwheel = e => {
 		zoom = max(1/240, min(data.duration, zoom*1.002**e.deltaY))
 	}
 	const STEP = sqrt(sqrt(2))
