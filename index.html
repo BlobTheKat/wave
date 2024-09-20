@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" style="height:100%">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Wave Analyzer</title>
+	<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAIRJREFUOE+tk1EOwCAIQ8v9D92FdAZRFw2TP40++yAaARrqZRcApKGewQgS2CMIPzXXLcAqQ35zk+AEwKXoq+BuuQ+EX9C+l9ZzFzpARvwAyNYBfa6jBMowAoQZE7WBJoUwducoYXNPSoDVrKYELUWfQJOQWihqdwn4/psx2KZUAkSHDA9HF1P/JI6T0AAAAABJRU5ErkJggg==" />
+	<style>
+		body{
+			display:flex;flex-flow:column;margin:0;height:100%;box-sizing:border-box;
+			font-family:Arial,sans-serif;font-size:24px;font-weight:bold;color:white;
+			user-select:none;-webkit-user-select:none;white-space:pre-wrap;
+		}
+		body div{ pointer-events:none;z-index:1;flex-basis:0;align-items:center;display:flex;flex-flow:column;justify-content:center; }
+		#title:after{
+			opacity:.5;font-size:16px;display:block;
+			content:"Drag & drop to import";
+		}
+	</style>
+</head>
+<div style="flex-grow:0.1;" id="title">Loading...</div>
+<div style="flex-grow:0.84;"></div>
+<div style="flex-grow:0.06;">Speed</div>
+<script type="application/javascript" src="https://blobthekat.github.io/gamma.js#app"></script>
+<script type="module">
+	const title = document.getElementById('title')
+	const actx = new AudioContext()
+	const fmt = a => a<768?a+'B':a<786432?(a/1024).toFixed(2)+'KB':a<805306368?(a/1048576).toFixed(2)+'MB':a<824633720832?(a/0x40000000).toFixed(2)+'GB':(a/0x10000000000).toFixed(2)+'TB'
+	let data, left, right
+	const decode = (f, n = f.name) => f.arrayBuffer().then(arr => (console.log('Read %s', fmt(arr.byteLength)), actx.decodeAudioData(arr, dat => {
+		data = dat
+		left = data.getChannelData(0), right = data.getChannelData(1)
+		console.log('Parsed %s samples', (data.length*data.numberOfChannels).toLocaleString())
+		if(s) s.onended = null, s.stop(), s = null
+		startT = 0; vol = speed = 1; zoom = min(3, data.duration)
+		gain.gain.value = 1
+		title.textContent = n
+		loading = false
+	})))
+	let loading = true
+	canvas.ondragover = e => e.preventDefault()
+	canvas.ondrop = e => {
+		e.preventDefault()
+		const file = e.dataTransfer.files[0]
+		if(!file.type.startsWith('audio/')) return
+		loading = true
+		title.textContent = 'Importing...'
+		decode(file)
+	}
+	fetch('./xenogenesis.mp3').then(a => decode(a, 'xenogenesis.mp3'), () => loading = false)
+	const gain = actx.createGain()
+	gain.connect(actx.destination)
+	const fastShader = Shader(`void main(){color=arg0;}`, VEC4)
+	let rightCol = vec4(1,0,0,1), leftCol = vec4(0,0,1,1)
+	const whiteFade = vec4(.125)
+	let s = null
+	let startT = 0
+	let down = 0
+	let zoom = 3
+	let speed = 1
+	let vol = 1
+	function end(){
+		const a = (actx.currentTime - startT) * speed - data.duration
+		startT = actx.currentTime - a / speed
+		play(a)
+	}
+	function play(t){
+		s = actx.createBufferSource()
+		s.connect(gain)
+		s.buffer = data
+		s.playbackRate.value = speed
+		gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
+		s.start(0, t)
+		s.onended = end
+	}
+	onmousewheel = e => {
+		zoom = max(1/240, min(data.duration, zoom*1.001**e.deltaY))
+	}
+	const STEP = sqrt(sqrt(2))
+	const cols = '122114411661244234435225'
+	function applyCol(i = 0){
+		const a = cols.charCodeAt(i<<=1)-48, b = cols.charCodeAt(i+1)-48
+		rightCol = vec4(a&1,a>>1&1,a>>2,1), leftCol = vec4(b&1,b>>1&1,b>>2,1)
+	}
+	let hideUI = false
+	onkeydown = e => {
+		if(e.keyCode == 37){
+			if(s){
+				s.onended = null, s.stop()
+				startT += 5
+				const d = data.duration / speed
+				while(startT > actx.currentTime) startT -= d
+				play((actx.currentTime - startT) * speed)
+			}else{
+				startT -= 5 * speed
+				while(startT < 0) startT += data.duration
+			}
+		}else if(e.keyCode == 39){
+			if(s){
+				s.onended = null, s.stop()
+				startT -= 5
+				const d = data.duration / speed
+				while(startT < actx.currentTime - d) startT += d
+				play((actx.currentTime - startT) * speed)
+			}else{
+				startT += 5 * speed
+				if(startT > data.duration) startT %= data.duration
+			}
+		}else if(e.keyCode == 40){
+			vol = max(0.0625, vol/STEP)
+			gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
+		}else if(e.keyCode == 38){
+			vol = min(16, vol*STEP)
+			gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
+		}else if(e.keyCode > 48 && e.keyCode < 58){
+			applyCol(e.keyCode-49)
+		}else if(e.keyCode == 48) applyCol(9)
+		else if(e.keyCode == 189) applyCol(10)
+		else if(e.keyCode == 187) applyCol(11)
+		else if(e.keyCode == 9) canvas.style.zIndex = 2-canvas.style.zIndex, hideUI = !hideUI
+		e.preventDefault()
+	}
+	onpointerdown = () => {down = t+.15}
+	onpointermove = e => {
+		if(!down || t < down) return
+		down = -1
+		if(e.y>innerHeight*.9){
+			const os = speed, x = max(0.01, min(2, e.x/innerWidth*2))
+			speed = x>.98&&x<1.02?1:x
+			if(s){
+				s.playbackRate.value = speed
+				gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
+				startT = actx.currentTime - (actx.currentTime - startT) * os / speed
+			}
+			return
+		}
+		if(s){
+			s.onended = null, s.stop()
+			startT = (e.x/innerWidth)*data.duration
+			play(startT)
+			startT = actx.currentTime - startT / speed
+		}else startT = (e.x/innerWidth)*data.duration
+	}
+	onpointerup = e => {
+		if(down < (down=0)) return
+		if(s){
+			startT = (actx.currentTime - startT) * speed
+			s.onended = null, s.stop()
+			s = null
+			return
+		}
+		play(startT)
+		startT = actx.currentTime - startT / speed
+	}
+	const lineGeo = Geometry(LINES, [0, 0, 1, 1])
+	render = () => {
+		if(loading && !hideUI) ctx.drawRect((sin(t*2)+1)*.3333, .057, .3333, .006, vec4.one)
+		if(!data) return
+		const p = s ? (actx.currentTime - startT) * speed : startT
+		const w = data.sampleRate*zoom
+		const skip = floor(w/ctx.width*.0625)+1
+		ctx.reset(1/w, 0, 0, .25, 0, .5)
+		let start = floor(p*(data.sampleRate-w/data.duration)), end = ceil(start + w)
+		ctx.translate(-start, 0)
+		start = floor(start)
+		ctx.shader = fastShader
+		ctx.blend = Blend.ADD
+		ctx.geometry = lineGeo
+		let ol = left[start], or = right[start]
+		for(let i=start+skip; i<=end; i+=skip){
+			const l = left[i], r = right[i]
+			ctx.drawRect(i, l, -skip, ol-(ol=l), leftCol)
+			ctx.drawRect(i, r, -skip, or-(or=r), rightCol)
+		}
+		if(hideUI) return
+		ctx.reset()
+		ctx.drawRect(0, 0.06, p/data.duration, 0.94, whiteFade)
+		ctx.drawRect(0, 0, speed*.5, 0.06, whiteFade)
+	}
+</script>
+</html>
