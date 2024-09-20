@@ -150,7 +150,7 @@
 			speedLabel.textContent = 'Speed: ' + speed.toFixed(2)+'x'
 			return
 		}
-		if(e.pointerType != 'mouse') zoom = max(1/240, min(data.duration, zoom*1.002**e.movementY))
+		if(e.pointerType != 'mouse' && abs(e.movementY) > abs(e.movementX)) zoom = max(1/240, min(data.duration, zoom*1.01**e.movementY))
 		const x = max(0,min(1,e.x/innerWidth))
 		if(s){
 			s.onended = null, s.stop()
