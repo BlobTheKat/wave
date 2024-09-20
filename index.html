@@ -136,8 +136,9 @@
 	}
 	oncontextmenu = e => e.preventDefault()
 	onpointerdown = () => {down = t+.15}
+	let tdx=0,tdy=0
 	onpointermove = e => {
-		if(!down || t < down) return
+		if(!down || t < down) return void(tdx+=abs(e.movementX),tdy+=abs(e.movementY))
 		down = -1
 		if(e.y>innerHeight*.9){
 			const os = speed, x = max(0.01, min(2, e.x/innerWidth*2))
@@ -150,7 +151,7 @@
 			speedLabel.textContent = 'Speed: ' + speed.toFixed(2)+'x'
 			return
 		}
-		if(e.pointerType != 'mouse' && abs(e.movementY) > abs(e.movementX)) zoom = max(1/240, min(data.duration, zoom*1.01**e.movementY))
+		if(tdy > tdx) return void(zoom = max(1/240, min(data.duration, zoom*1.015**e.movementY)))
 		const x = max(0,min(1,e.x/innerWidth))
 		if(s){
 			s.onended = null, s.stop()
@@ -158,6 +159,7 @@
 		}else startT = x*data.duration
 	}
 	onpointerup = e => {
+		tdx = tdy = 0
 		if(down < (down=0)) return
 		if(s){
 			startT = (actx.currentTime - startT) * speed
