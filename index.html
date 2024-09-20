@@ -34,7 +34,8 @@
 	let data, left, right
 	const decode = (f, n = f.name) => f.arrayBuffer().then(arr => (console.log('Read %s', fmt(arr.byteLength)), actx.decodeAudioData(arr, dat => {
 		data = dat
-		left = data.getChannelData(0), right = data.getChannelData(1)
+		if(data.numberOfChannels > 1) left = data.getChannelData(0), right = data.getChannelData(1)
+		else right = data.getChannelData(0), left = null
 		console.log('Parsed %s samples', (data.length*data.numberOfChannels).toLocaleString())
 		if(s) s.onended = null, s.stop(), s = null
 		startT = 0; vol = speed = 1; zoom = min(3, data.duration)
@@ -181,12 +182,19 @@
 		ctx.shader = fastShader
 		ctx.blend = Blend.ADD
 		ctx.geometry = lineGeo
-		let ol = left[start], or = right[start]
-		for(let i=start+skip; i<=end; i+=skip){
-			const l = left[i], r = right[i]
-			ctx.drawRect(i, l, -skip, ol-(ol=l), leftCol)
+		let or = right[start]
+		if(left){
+			let ol = left[start]
+			for(let i=start+skip; i<=end; i+=skip){
+				const l = left[i], r = right[i]
+				ctx.drawRect(i, l, -skip, ol-(ol=l), leftCol)
+				ctx.drawRect(i, r, -skip, or-(or=r), rightCol)
+			}
+		}else for(let i=start+skip; i<=end; i+=skip){
+			const r = right[i]
 			ctx.drawRect(i, r, -skip, or-(or=r), rightCol)
 		}
+		
 		if(hideUI) return
 		ctx.reset()
 		ctx.drawRect(0, 0.06, p/data.duration, 0.94, whiteFade)
