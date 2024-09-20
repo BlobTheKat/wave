@@ -70,12 +70,12 @@
 		play(max(0, (actx.currentTime - startT) * speed - data.duration))
 	}
 	function play(t = NaN){
-		if(actx.state == 'interrupted'){
+		if(actx.state != 'running'){
 			if(s){
 				s.onended = null; s.stop(); s = null
 				startT = (actx.currentTime - startT) * speed
 			}
-			actx.resume().catch(alert)
+			actx.resume().then(() => s||play(startT),alert)
 			return
 		}
 		s = actx.createBufferSource()
