@@ -72,6 +72,7 @@
 		play(a)
 	}
 	function play(t){
+		if(actx.state != "running") resume()
 		s = actx.createBufferSource()
 		s.connect(gain)
 		s.buffer = data
@@ -170,9 +171,12 @@
 		time.textContent = (t?t+(m<10?':0':':')+m:m)+(s<10?':0':':')+s
 		time.dataset.after = (cs<10?'.0':'.')+cs
 	}
-	onfocus = () => {
-		if(s && actx.state != "running") actx.resume()
-	}
+	const resume = actx.resume().catch(() => {
+		if(!s) return
+		s.onended = null; s.stop(); s = null
+		startT = (actx.currentTime - startT) * speed
+	})
+	onfocus = () => { actx.state != "running" && resume() }
 	render = () => {
 		if(loading && !hideUI) ctx.drawRect((sin(t*2)+1)*.3333, .057, .3333, .006, vec4.one)
 		if(!data) return void(time.textContent = '-:--')
