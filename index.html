@@ -38,8 +38,10 @@
 	let data, left, right
 	const decode = (f, n = f.name) => f.arrayBuffer().then(arr => (console.log('Read %s', fmt(arr.byteLength)), actx.decodeAudioData(arr, dat => {
 		data = dat
-		if(data.numberOfChannels > 1) left = data.getChannelData(0), right = data.getChannelData(1)
-		else right = data.getChannelData(0), left = null
+		left = null
+		right = new Float32Array(data.length)
+		data.copyFromChannel(right, 0)
+		if(data.numberOfChannels > 1) left = right, right = new Float32Array(data.length), data.copyFromChannel(right, 1)
 		console.log('Parsed %s samples', (data.length*data.numberOfChannels).toLocaleString())
 		if(s) s.onended = null, s.stop(), s = null
 		startT = 0; vol = speed = 1; zoom = min(3, data.duration)
