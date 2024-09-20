@@ -66,7 +66,7 @@
 	let speed = 1
 	let vol = 1
 	function end(){
-		const a = (actx.currentTime - startT) * speed - data.duration
+		const a = max(0, (actx.currentTime - startT) * speed - data.duration)
 		startT = actx.currentTime - a / speed
 		play(a)
 	}
@@ -126,6 +126,7 @@
 		else if(e.keyCode == 9) canvas.style.zIndex = 2-canvas.style.zIndex, hideUI = !hideUI
 		e.preventDefault()
 	}
+	oncontextmenu = e => e.preventDefault()
 	onpointerdown = () => {down = t+.15}
 	onpointermove = e => {
 		if(!down || t < down) return
