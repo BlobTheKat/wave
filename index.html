@@ -20,10 +20,10 @@
 </head>
 <div style="flex-grow:0.1;" id="title">Loading...</div>
 <div style="flex-grow:0.84;"></div>
-<div style="flex-grow:0.06;">Speed</div>
+<div style="flex-grow:0.06;" id="speed">Speed: 1.00x</div>
 <script type="application/javascript" src="https://blobthekat.github.io/gamma.js#app"></script>
 <script type="module">
-	const title = document.getElementById('title')
+	const title = document.getElementById('title'), speedLabel = document.getElementById('speed')
 	const actx = new AudioContext()
 	const fmt = a => a<768?a+'B':a<786432?(a/1024).toFixed(2)+'KB':a<805306368?(a/1048576).toFixed(2)+'MB':a<824633720832?(a/0x40000000).toFixed(2)+'GB':(a/0x10000000000).toFixed(2)+'TB'
 	let data, left, right
@@ -132,6 +132,7 @@
 				gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
 				startT = actx.currentTime - (actx.currentTime - startT) * os / speed
 			}
+			speedLabel.textContent = 'Speed: ' + speed.toFixed(2)+'x'
 			return
 		}
 		if(s){
