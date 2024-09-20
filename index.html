@@ -16,14 +16,19 @@
 			opacity:.5;font-size:16px;display:block;
 			content:"Drag & drop to import";
 		}
+		#time:after{
+			opacity:.5;font-size:16px;
+			content: attr(data-after);
+		}
 	</style>
 </head>
 <div style="flex-grow:0.1;" id="title">Loading...</div>
-<div style="flex-grow:0.84;"></div>
+<div style="flex-grow:0.78;"></div>
+<div style="flex-grow:0.06"><span id="time">-:--</span></div>
 <div style="flex-grow:0.06;" id="speed">Speed: 1.00x</div>
 <script type="application/javascript" src="https://blobthekat.github.io/gamma.js#app"></script>
 <script type="module">
-	const title = document.getElementById('title'), speedLabel = document.getElementById('speed')
+	const title = document.getElementById('title'), speedLabel = document.getElementById('speed'), time = document.getElementById('time')
 	const actx = new AudioContext()
 	const fmt = a => a<768?a+'B':a<786432?(a/1024).toFixed(2)+'KB':a<805306368?(a/1048576).toFixed(2)+'MB':a<824633720832?(a/0x40000000).toFixed(2)+'GB':(a/0x10000000000).toFixed(2)+'TB'
 	let data, left, right
@@ -135,12 +140,13 @@
 			speedLabel.textContent = 'Speed: ' + speed.toFixed(2)+'x'
 			return
 		}
+		const x = max(0,min(1,e.x/innerWidth))
 		if(s){
 			s.onended = null, s.stop()
-			startT = (e.x/innerWidth)*data.duration
+			startT = x*data.duration
 			play(startT)
 			startT = actx.currentTime - startT / speed
-		}else startT = (e.x/innerWidth)*data.duration
+		}else startT = x*data.duration
 	}
 	onpointerup = e => {
 		if(down < (down=0)) return
@@ -154,10 +160,18 @@
 		startT = actx.currentTime - startT / speed
 	}
 	const lineGeo = Geometry(LINES, [0, 0, 1, 1])
+	const showTime = t => {
+		const cs = floor((t%1)*100); t = floor(t)
+		const s = t%60; t = floor(t/60)
+		let m = t%60; t = floor(t/60)
+		time.textContent = (t?t+(m<10?':0':':')+m:m)+(s<10?':0':':')+s
+		time.dataset.after = (cs<10?'.0':'.')+cs
+	}
 	render = () => {
 		if(loading && !hideUI) ctx.drawRect((sin(t*2)+1)*.3333, .057, .3333, .006, vec4.one)
-		if(!data) return
+		if(!data) return void(time.textContent = '-:--')
 		const p = s ? (actx.currentTime - startT) * speed : startT
+		showTime(p)
 		const w = data.sampleRate*zoom
 		const skip = floor(w/ctx.width*.0625)+1
 		ctx.reset(1/w, 0, 0, .25, 0, .5)
