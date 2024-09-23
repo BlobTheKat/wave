@@ -164,7 +164,7 @@
 	}
 	onpointerup = e => {
 		tdx = tdy = 0
-		if(down < (down=0)) return
+		if(down <= (down=0)) return
 		if(s){
 			startT = (actx.currentTime - startT) * speed
 			s.onended = null, s.stop()
