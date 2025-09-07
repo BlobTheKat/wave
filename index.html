@@ -102,30 +102,24 @@
 		rightCol = vec4(a&1,a>>1&1,a>>2,1), leftCol = vec4(b&1,b>>1&1,b>>2,1)
 	}
 	let hideUI = false
+	function advance(dt){
+		if(s){
+			s.onended = null, s.stop()
+			startT -= dt
+			const d = data.duration / speed
+			while(startT > actx.currentTime) startT -= d
+			play()
+		}else{
+			startT += dt * speed
+			while(startT < 0) startT += data.duration
+		}
+	}
 	onkeydown = e => {
-		if(e.keyCode == 37){
-			if(s){
-				s.onended = null, s.stop()
-				startT += 5
-				const d = data.duration / speed
-				while(startT > actx.currentTime) startT -= d
-				play()
-			}else{
-				startT -= 5 * speed
-				while(startT < 0) startT += data.duration
-			}
-		}else if(e.keyCode == 39){
-			if(s){
-				s.onended = null, s.stop()
-				startT -= 5
-				const d = data.duration / speed
-				while(startT < actx.currentTime - d) startT += d
-				play()
-			}else{
-				startT += 5 * speed
-				if(startT > data.duration) startT %= data.duration
-			}
-		}else if(e.keyCode == 40){
+		if(e.keyCode == 37) advance(e.shiftKey ? -60 : -5)
+		else if(e.keyCode == 39) advance(e.shiftKey ? 60 : 5)
+		else if(e.keyCode == 188) advance(e.shiftKey ? -.01 : -.2)
+		else if(e.keyCode == 190) advance(e.shiftKey ? .01 : .2)
+		else if(e.keyCode == 40){
 			vol = max(0.0625, vol/STEP)
 			gain.gain.value = (speed<.15?.3873/speed:1/sqrt(speed)) * vol
 		}else if(e.keyCode == 38){
