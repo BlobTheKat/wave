@@ -187,7 +187,7 @@
 	}
 	const lineGeo = Geometry(LINES, [0, 0, 1, 1])
 	const showTime = t => {
-		const ms = floor((t-(t=floor(t)))*-1000)
+		const ms = floor((t-(t=floor(t)))*1000)
 		const s = t%60; t = floor(t/60)
 		let m = t%60; t = floor(t/60)
 		time.textContent = (t?t+(m<10?':0':':')+m:m)+(s<10?':0':':')+s
