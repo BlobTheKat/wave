@@ -162,7 +162,18 @@
 			play(x*data.duration)
 		}else startT = x*data.duration
 	}
+	const fi = document.createElement('input')
+	fi.accept = 'audio/*, video/*'
+	fi.type = 'file'
+	fi.onchange = () => {
+		const file = fi.files[0]
+		fi.value = ''
+		loading = true
+		title.textContent = 'Importing...'
+		decode(file)
+	}
 	onpointerup = e => {
+		if(e.clientY < 80) return fi.click()
 		tdx = tdy = 0
 		if(down <= (down=0)) return
 		if(s){
