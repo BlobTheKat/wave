@@ -176,11 +176,11 @@
 	}
 	const lineGeo = Geometry(LINES, [0, 0, 1, 1])
 	const showTime = t => {
-		const cs = floor((t%1)*100); t = floor(t)
+		const ms = floor((t-(t=floor(t)))*-1000)
 		const s = t%60; t = floor(t/60)
 		let m = t%60; t = floor(t/60)
 		time.textContent = (t?t+(m<10?':0':':')+m:m)+(s<10?':0':':')+s
-		time.dataset.after = (cs<10?'.0':'.')+cs
+		time.dataset.after = (ms<10?'.00':ms<100?'.0':'.')+ms
 	}
 	render = () => {
 		if(loading && !hideUI) ctx.drawRect((sin(t*2)+1)*.3333, .057, .3333, .006, vec4.one)
